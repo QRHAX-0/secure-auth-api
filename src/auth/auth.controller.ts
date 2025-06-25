@@ -16,7 +16,7 @@ export class AuthController {
 
   @Post('login')
   @UseGuards(LocalGuard)
-  login(@Body() data: loginDTO, @Res() res: Response, @Req() req: Request) {
+  login(@Body() data: loginDTO, @Res() res: Response) {
     return this.authService.login(data, res);
   }
 }
