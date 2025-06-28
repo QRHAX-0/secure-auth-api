@@ -1,9 +1,18 @@
-import { Controller, Post, Body, Res, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  UseGuards,
+  Req,
+  Get,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { registerDTO } from './dtos/register.dto';
 import { Request, Response } from 'express';
-import { loginDTO } from './dtos/login.dto';
 import { LocalGuard } from './guards/local.guard';
+import { AccessTokenGuard } from './guards/jwt.guard';
+import { JwtRefGuard } from './guards/jwt-refresh.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -14,9 +23,32 @@ export class AuthController {
     return this.authService.register(data, res);
   }
 
-  @Post('login')
   @UseGuards(LocalGuard)
-  login(@Body() data: loginDTO, @Res() res: Response) {
-    return this.authService.login(data, res);
+  @Post('login')
+  login(@Req() req: Request, @Res() res: Response) {
+    console.log(req.user);
+    return this.authService.login(
+      req.user as { id: number; email: string; name: string },
+      res,
+    );
+  }
+
+  @UseGuards(JwtRefGuard)
+  @Post('refresh')
+  async refreshToken(@Req() req: Request, @Res() res: Response) {
+    // الـ user هيكون متاح في req.user بعد الـ strategy
+    const user = req.user as { id: number; email: string; name: string };
+
+    return await this.authService.refreshToken(user, res);
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Get('profile')
+  getProfile(@Req() req: Request) {
+    // req.user هنا فيه البيانات الي رجعناها من validate()
+    console.log(req.user as { id: number; email: string; name: string }); // المستخدم اسمه إيه
+    // console.log(req.user.email); // إيميله إيه
+
+    return req.user;
   }
 }

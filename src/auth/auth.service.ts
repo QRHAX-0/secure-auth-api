@@ -1,9 +1,9 @@
-import { Injectable, Res } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { registerDTO } from './dtos/register.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { loginDTO } from './dtos/login.dto';
 
 @Injectable()
@@ -42,21 +42,6 @@ export class AuthService {
     });
   }
 
-  async login({ email, password }: loginDTO, res: Response) {
-    const user = await this.validateUser({ email, password });
-
-    await this.generateTokens(user, res);
-
-    return res.status(200).json({
-      message: 'User logged in successfully',
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-    });
-  }
-
   async validateUser({ email, password }: loginDTO) {
     const user = await this.prisma.user.findUnique({
       where: {
@@ -72,10 +57,41 @@ export class AuthService {
     return user;
   }
 
-  async generateTokens(
+  async login(
     user: { id: number; email: string; name: string },
     res: Response,
   ) {
+    await this.generateTokens(user, res);
+
+    return res.status(200).json({
+      message: 'User logged in successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      },
+    });
+  }
+
+  async refreshToken(
+    user: { id: number; email: string; name: string }, // ده هيجي من الـ strategy
+    res: Response,
+  ) {
+    // الـ strategy خلاص تحققت من كل حاجة
+    // هنا بس نولد tokens جديدة
+    await this.generateTokens(user, res);
+
+    return res.status(200).json({
+      message: 'Tokens refreshed successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      },
+    });
+  }
+
+  async generateTokens(user: { id: number; email: string }, res: Response) {
     const payload = { sub: user.id, email: user.email };
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: process.env.ACCESS_TOKEN_SECRET,
@@ -101,14 +117,15 @@ export class AuthService {
   setCookies(res: Response, accessToken: any, refreshToken: any) {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
+      path: '/',
       maxAge: 15 * 60 * 1000,
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/auth/refresh',
       maxAge: 7 * 24 * 60 * 60 * 1000,
