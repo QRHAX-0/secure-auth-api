@@ -91,6 +91,31 @@ export class AuthService {
     });
   }
 
+  async logout(accessToken: string, res: Response) {
+    const decode = await this.jwtService.verifyAsync(accessToken, {
+      secret: process.env.ACCESS_TOKEN_SECRET || 'default secret',
+    });
+
+    if (!decode) throw new Error('accessToken not found');
+
+    const userId = decode.sub;
+
+    await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        refreshToken: null,
+      },
+    });
+
+    this.clearCookies(res);
+
+    return res.status(200).json({
+      message: 'Logged out successfully',
+    });
+  }
+
   async generateTokens(user: { id: number; email: string }, res: Response) {
     const payload = { sub: user.id, email: user.email };
     const accessToken = await this.jwtService.signAsync(payload, {
@@ -124,6 +149,24 @@ export class AuthService {
     });
 
     res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/auth/refresh',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+  }
+
+  clearCookies(res: Response) {
+    res.clearCookie('access_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.clearCookie('refresh_token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

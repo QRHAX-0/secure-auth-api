@@ -26,7 +26,6 @@ export class AuthController {
   @UseGuards(LocalGuard)
   @Post('login')
   login(@Req() req: Request, @Res() res: Response) {
-    console.log(req.user);
     return this.authService.login(
       req.user as { id: number; email: string; name: string },
       res,
@@ -36,19 +35,20 @@ export class AuthController {
   @UseGuards(JwtRefGuard)
   @Post('refresh')
   async refreshToken(@Req() req: Request, @Res() res: Response) {
-    // الـ user هيكون متاح في req.user بعد الـ strategy
     const user = req.user as { id: number; email: string; name: string };
-
     return await this.authService.refreshToken(user, res);
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Post('logout')
+  async logout(@Req() req: Request, @Res() res: Response) {
+    const accessToken = req.cookies.access_token as string;
+    return this.authService.logout(accessToken, res);
   }
 
   @UseGuards(AccessTokenGuard)
   @Get('profile')
   getProfile(@Req() req: Request) {
-    // req.user هنا فيه البيانات الي رجعناها من validate()
-    console.log(req.user as { id: number; email: string; name: string }); // المستخدم اسمه إيه
-    // console.log(req.user.email); // إيميله إيه
-
     return req.user;
   }
 }
