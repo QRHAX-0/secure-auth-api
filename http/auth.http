@@ -1,0 +1,37 @@
+### Register Request
+POST http://localhost:3000
+/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "test@example.com",
+  "password": "123"
+}
+
+
+### Login Request
+POST http://localhost:3000
+/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "123"
+}
+
+
+### Logout Request
+POST http://localhost:3000
+/auth/logout
+Content-Type: application/json
+
+
+### Refresh Request
+POST http://localhost:3000
+/auth/refresh
+Content-Type: application/json
+
+
+### Get Profile
+GET http://localhost:3000/auth/profile
