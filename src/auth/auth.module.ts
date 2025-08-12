@@ -7,9 +7,10 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt-access.strategy';
 import { JwtRefStrategy } from './strategies/jwt-refresh.strategy';
 import { PassportModule } from '@nestjs/passport';
+import { RolesModule } from 'src/roles/roles.module';
 
 @Module({
-  imports: [PrismaModule, PassportModule, JwtModule.register({})],
+  imports: [RolesModule, PrismaModule, PassportModule, JwtModule.register({})],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy, JwtRefStrategy],
   exports: [JwtModule],

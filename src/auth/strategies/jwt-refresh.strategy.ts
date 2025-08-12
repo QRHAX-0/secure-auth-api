@@ -57,5 +57,5 @@ export class JwtRefStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
       email: user.email,
       name: user.name,
     };
-  }
+}
 }

@@ -19,6 +19,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       id: user.id,
       email: user.email,
       name: user.name,
+      roleId: user.roleId,
     };
   }
 }

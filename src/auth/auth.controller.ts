@@ -13,6 +13,10 @@ import { Request, Response } from 'express';
 import { LocalGuard } from './guards/local.guard';
 import { AccessTokenGuard } from './guards/jwt.guard';
 import { JwtRefGuard } from './guards/jwt-refresh.guard';
+import { authorizationGuard } from './guards/authorization.guard';
+import { Permission } from 'src/decorators/permission.decorator';
+import { Resource } from 'src/roles/enums/resource.enum';
+import { Action } from 'src/roles/enums/action.enum';
 
 @Controller('auth')
 export class AuthController {
@@ -27,7 +31,7 @@ export class AuthController {
   @Post('login')
   login(@Req() req: Request, @Res() res: Response) {
     return this.authService.login(
-      req.user as { id: number; email: string; name: string },
+      req.user as { id: number; email: string; name: string; roleId: number },
       res,
     );
   }
@@ -46,9 +50,16 @@ export class AuthController {
     return this.authService.logout(accessToken, res);
   }
 
-  @UseGuards(AccessTokenGuard)
+  @Permission([
+    {
+      resource: Resource.users,
+      actions: [Action.read, Action.update, Action.delete],
+    },
+  ])
+  @UseGuards(AccessTokenGuard, authorizationGuard)
   @Get('profile')
   getProfile(@Req() req: Request) {
+    // console.log(req.user);
     return req.user;
   }
 }
